@@ -1,2 +1,5 @@
 print("hola mundo")
 print ("hola hola probando")
+print("hola mundo")
+print("hola mundo")
+print("hola mundo")

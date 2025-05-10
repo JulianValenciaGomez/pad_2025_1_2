@@ -1,0 +1,7 @@
+README.md
+setup.py
+edu_pad.egg-info/PKG-INFO
+edu_pad.egg-info/SOURCES.txt
+edu_pad.egg-info/dependency_links.txt
+edu_pad.egg-info/requires.txt
+edu_pad.egg-info/top_level.txt
