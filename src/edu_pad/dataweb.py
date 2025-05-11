@@ -20,6 +20,8 @@ class DataWeb:
             soup = BeautifulSoup(respuesta.text,'html.parser')
             tabla = soup.select_one('div[data-testid ="history-table"]table')
             print(tabla)
+            #la pagina Usa JavaScript y no me deja ejecutar ese codigo asi que no tiene sentido usarlo.
+            #El ejemplo visto en clase ya no sirve.
         
         except Exception as err:
             print("error en la funcion obtener datos")
