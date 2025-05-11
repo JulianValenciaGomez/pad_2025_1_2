@@ -1,10 +1,14 @@
-Metadata-Version: 1.0
-Name: edu-pad
+Metadata-Version: 2.4
+Name: edu_pad
 Version: 0.0.1
 Summary: Programación para analisis de datos, se replica lo desarrollado en clase
-Home-page: UNKNOWN
 Author: Julian Valencia
 Author-email: julian.valencia@est.iudigital.edu.co
-License: UNKNOWN
-Description: UNKNOWN
-Platform: UNKNOWN
+Requires-Dist: pandas
+Requires-Dist: openpyxl
+Requires-Dist: requests
+Requires-Dist: beautifulsoup4
+Dynamic: author
+Dynamic: author-email
+Dynamic: requires-dist
+Dynamic: summary
