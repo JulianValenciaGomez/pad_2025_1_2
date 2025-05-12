@@ -1,0 +1,39 @@
+Metadata-Version: 2.2
+Name: edu_pad
+Version: 0.0.1
+Summary: Programación para análisis de datos - Replicación de desarrollo en clase
+Author: Julian Valencia
+Author-email: julian.valencia@est.iudigital.edu.co
+Project-URL: Bug Reports, https://github.com/JulianValenciaGomez/pad_2025_1_2/issues
+Project-URL: Source, https://github.com/JulianValenciaGomez/pad_2025_1_2
+Project-URL: Documentation, https://github.com/JulianValenciaGomez/pad_2025_1_2#readme
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Education
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: pandas>=1.4.0
+Requires-Dist: openpyxl>=3.0.0
+Requires-Dist: requests>=2.28.0
+Requires-Dist: beautifulsoup4>=4.11.0
+Requires-Dist: lxml>=4.9.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: pytest-cov>=3.0; extra == "dev"
+Requires-Dist: flake8>=5.0; extra == "dev"
+Requires-Dist: black>=22.0; extra == "dev"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: project-url
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# pad_2025_1_2

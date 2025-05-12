@@ -1,0 +1,40 @@
+name: Ejecutar Scraper de Quotes
+
+on:
+  workflow_dispatch:  # Permite ejecución manual
+  schedule:
+    - cron: '0 12 * * *'  # Ejecutar diariamente a las 12 PM (UTC)
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Instalar dependencias
+        run: |
+          pip install pandas requests beautifulsoup4 openpyxl lxml
+
+      - name: Ejecutar Scraper
+        run: |
+          python -c "
+          from edu_pad.dataweb import QuotesScraper;
+          scraper = QuotesScraper();
+          df = scraper.get_quotes(pages=2);
+          print(f'📊 {len(df)} citas scrapeadas!');
+          "
+
+      - name: Subir datos a GitHub (opcional)
+        if: success()
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add data/quotes_data.csv
+          git commit -m "Actualización automática de datos"
+          git push
