@@ -118,10 +118,14 @@ class QuotesScraper:
         Returns:
             DataFrame con todas las citas
         """
-        if not force_rescrape and (df_existing := self.load_data()):
-            print("Datos existentes cargados desde archivo.")
-            return df_existing
+        # Cargar datos existentes si no se fuerza rescrapeo
+        if not force_rescrape:
+            df_existing = self.load_data()
+            if df_existing is not None and not df_existing.empty:  # 👈 Cambio clave
+                print("Datos existentes cargados desde archivo.")
+                return df_existing
         
+        # Si no hay datos existentes o se fuerza rescrapeo
         df = self.scrape_quotes(pages)
         
         if not df.empty:
