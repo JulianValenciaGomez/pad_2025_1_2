@@ -1,0 +1,2 @@
+[console_scripts]
+run-scraper = edu_pad.dataweb:main

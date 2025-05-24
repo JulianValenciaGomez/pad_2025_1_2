@@ -29,6 +29,11 @@ setup(
             "black>=22.0"
         ]
     },
+    entry_points={  
+        'console_scripts': [
+            'run-scraper=edu_pad.dataweb:main',  
+        ],
+    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Education",

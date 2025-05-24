@@ -118,12 +118,10 @@ class QuotesScraper:
         Returns:
             DataFrame con todas las citas
         """
-        # Intentar cargar datos existentes si no forzamos rescrapeo
         if not force_rescrape and (df_existing := self.load_data()):
             print("Datos existentes cargados desde archivo.")
             return df_existing
         
-        # Si no hay datos existentes o forzamos rescrapeo
         df = self.scrape_quotes(pages)
         
         if not df.empty:
@@ -134,23 +132,20 @@ class QuotesScraper:
         
         return df
 
-
-# Ejemplo de uso
-if __name__ == "__main__":
+def main():
+    """Función principal para ejecución desde CLI"""
     print("Iniciando scraper...")
     scraper = QuotesScraper()
-    
-    # Obtener datos (usará cache si existe, a menos que force_rescrape=True)
     quotes_df = scraper.get_quotes(pages=2)
     
-    # Mostrar resultados
     if not quotes_df.empty:
         print("\n📊 Vista previa de los datos:")
         print(quotes_df.head())
-        
-        # Mostrar ubicación de los archivos guardados
         print("\n💾 Datos persistentes guardados en:")
         print(f"- CSV: {os.path.abspath(scraper.CSV_PATH)}")
         print(f"- Excel: {os.path.abspath(scraper.EXCEL_PATH)}")
     else:
         print("\nNo se obtuvieron datos para mostrar.")
+
+if __name__ == "__main__":
+    main()
