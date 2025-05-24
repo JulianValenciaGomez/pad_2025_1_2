@@ -10,19 +10,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - name: Install Package
+
+      - name: Install dependencies
         run: |
           pip install -e .
-          pip install pandas requests beautifulsoup4 openpyxl
-      - name: Run Scraper
+          pip install pandas requests beautifulsoup4 openpyxl lxml
+
+      - name: Create data directory
         run: |
-          python -m edu_pad.dataweb
-      - name: Upload Data
-        uses: actions/upload-artifact@v4  # 👈 ¡Cambiado a v4!
+          mkdir -p src/edu_pad/data
+          echo "Estructura de directorios:"
+          tree src/edu_pad || ls -R src/edu_pad
+
+      - name: Run Scraper
+        working-directory: ./src/edu_pad  # 👈 Ejecuta desde aquí
+        run: |
+          python dataweb.py
+          echo "Contenido de data/:"
+          ls -lh data/
+
+      - name: Upload Artifacts
+        if: success() && always()
+        uses: actions/upload-artifact@v4
         with:
           name: quotes-data
-          path: src/edu_pad/data/
+          path: |
+            src/edu_pad/data/quotes_data.csv
+            src/edu_pad/data/quotes_data.xlsx
+          if-no-files-found: warn  # 👈 Solo muestra advertencia si no hay archivos
+          retention-days: 5

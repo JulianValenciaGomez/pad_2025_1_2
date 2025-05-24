@@ -15,7 +15,7 @@ class QuotesScraper:
     """
     
     BASE_URL = "https://quotes.toscrape.com"
-    DATA_DIR = "data"
+    DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')  # Ruta relativa al script
     CSV_PATH = os.path.join(DATA_DIR, "quotes_data.csv")
     EXCEL_PATH = os.path.join(DATA_DIR, "quotes_data.xlsx")
     
@@ -53,7 +53,7 @@ class QuotesScraper:
             'quote': text,
             'author': author,
             'author_link': author_link,
-            'tags': ', '.join(tags),
+            'tags': '|'.join(tags),  # Separador más robusto que la coma
             'tags_count': len(tags),
             'first_tag': tags[0] if tags else None
         }
@@ -98,12 +98,10 @@ class QuotesScraper:
         """Carga datos existentes desde archivo"""
         try:
             if format == 'csv' and os.path.exists(self.CSV_PATH):
-                df = pd.read_csv(self.CSV_PATH)
-                return df if not df.empty else pd.DataFrame()
+                return pd.read_csv(self.CSV_PATH)
             elif format == 'excel' and os.path.exists(self.EXCEL_PATH):
-                df = pd.read_excel(self.EXCEL_PATH)
-                return df if not df.empty else pd.DataFrame()
-            return pd.DataFrame()
+                return pd.read_excel(self.EXCEL_PATH)
+            return pd.DataFrame()  # Retorna DataFrame vacío si no hay archivos
         except Exception as e:
             print(f"Error cargando datos: {str(e)}")
             return pd.DataFrame()
@@ -130,14 +128,14 @@ class QuotesScraper:
 
 def main():
     """Función principal para ejecución desde CLI"""
-    print("Iniciando scraper...")
+    print("=== Iniciando scraper ===")
     scraper = QuotesScraper()
     quotes_df = scraper.get_quotes(pages=2)
     
     if not quotes_df.empty:
         print("\n📊 Vista previa de los datos:")
-        print(quotes_df.head())
-        print("\n💾 Datos persistentes guardados en:")
+        print(quotes_df.head(3))
+        print("\n💾 Datos guardados en:")
         print(f"- CSV: {os.path.abspath(scraper.CSV_PATH)}")
         print(f"- Excel: {os.path.abspath(scraper.EXCEL_PATH)}")
     else:
