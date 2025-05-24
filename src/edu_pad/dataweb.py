@@ -2,7 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 from urllib.parse import urljoin
-from typing import Optional
 import os
 from pathlib import Path
 
@@ -32,7 +31,7 @@ class QuotesScraper:
         """Crea el directorio data si no existe"""
         Path(self.DATA_DIR).mkdir(exist_ok=True)
     
-    def _get_soup(self, url: str) -> Optional[BeautifulSoup]:
+    def _get_soup(self, url: str):
         """Obtiene y parsea HTML con manejo robusto de errores"""
         try:
             response = self.session.get(url, timeout=10)
@@ -95,37 +94,30 @@ class QuotesScraper:
             df.to_excel(self.EXCEL_PATH, index=False)
             print(f"Datos guardados en {self.EXCEL_PATH}")
     
-    def load_data(self, format: str = 'csv') -> Optional[pd.DataFrame]:
+    def load_data(self, format: str = 'csv') -> pd.DataFrame:
         """Carga datos existentes desde archivo"""
         try:
             if format == 'csv' and os.path.exists(self.CSV_PATH):
-                return pd.read_csv(self.CSV_PATH)
+                df = pd.read_csv(self.CSV_PATH)
+                return df if not df.empty else pd.DataFrame()
             elif format == 'excel' and os.path.exists(self.EXCEL_PATH):
-                return pd.read_excel(self.EXCEL_PATH)
-            return None
+                df = pd.read_excel(self.EXCEL_PATH)
+                return df if not df.empty else pd.DataFrame()
+            return pd.DataFrame()
         except Exception as e:
             print(f"Error cargando datos: {str(e)}")
-            return None
+            return pd.DataFrame()
     
     def get_quotes(self, pages: int = 1, force_rescrape: bool = False) -> pd.DataFrame:
         """
         Obtiene citas, con cache local automático.
-        
-        Args:
-            pages: Número de páginas a scrapear
-            force_rescrape: Si True, ignora datos existentes y rescrapea
-            
-        Returns:
-            DataFrame con todas las citas
         """
-        # Cargar datos existentes si no se fuerza rescrapeo
         if not force_rescrape:
             df_existing = self.load_data()
-            if df_existing is not None and not df_existing.empty:  # 👈 Cambio clave
+            if not df_existing.empty:
                 print("Datos existentes cargados desde archivo.")
                 return df_existing
         
-        # Si no hay datos existentes o se fuerza rescrapeo
         df = self.scrape_quotes(pages)
         
         if not df.empty:
