@@ -4,20 +4,22 @@ import pandas as pd
 from urllib.parse import urljoin
 import os
 from pathlib import Path
+from datetime import datetime
 
 class QuotesScraper:
     """
-    Scraper profesional que guarda datos persistentemente en archivos locales.
+    Scraper profesional con persistencia de datos y manejo histórico
     
     Uso:
     scraper = QuotesScraper()
-    df = scraper.get_quotes(pages=2)  # Obtiene datos y los guarda automáticamente
+    df = scraper.get_quotes(pages=2)  # Devuelve DataFrame con las citas
     """
     
     BASE_URL = "https://quotes.toscrape.com"
-    DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')  # Ruta relativa al script
-    CSV_PATH = os.path.join(DATA_DIR, "quotes_data.csv")
-    EXCEL_PATH = os.path.join(DATA_DIR, "quotes_data.xlsx")
+    DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
+    HISTORICAL_DIR = os.path.join(DATA_DIR, 'histórico')
+    CSV_ACTUAL = os.path.join(DATA_DIR, "quotes_actual.csv")
+    EXCEL_ACTUAL = os.path.join(DATA_DIR, "quotes_actual.xlsx")
     
     def __init__(self):
         self.session = requests.Session()
@@ -25,11 +27,12 @@ class QuotesScraper:
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
             'Accept-Language': 'en-US,en;q=0.9'
         })
-        self._setup_data_directory()
+        self._setup_directories()
     
-    def _setup_data_directory(self):
-        """Crea el directorio data si no existe"""
+    def _setup_directories(self):
+        """Crea las estructuras de directorios necesarias"""
         Path(self.DATA_DIR).mkdir(exist_ok=True)
+        Path(self.HISTORICAL_DIR).mkdir(exist_ok=True)
     
     def _get_soup(self, url: str):
         """Obtiene y parsea HTML con manejo robusto de errores"""
@@ -53,9 +56,10 @@ class QuotesScraper:
             'quote': text,
             'author': author,
             'author_link': author_link,
-            'tags': '|'.join(tags),  # Separador más robusto que la coma
+            'tags': '|'.join(tags),  # Separador más robusto
             'tags_count': len(tags),
-            'first_tag': tags[0] if tags else None
+            'first_tag': tags[0] if tags else None,
+            'fecha_extraccion': datetime.now().strftime('%Y-%m-%d')  # Nueva columna
         }
     
     def scrape_quotes(self, pages: int = 1) -> pd.DataFrame:
@@ -84,62 +88,45 @@ class QuotesScraper:
         
         return pd.DataFrame(all_quotes)
     
-    def save_data(self, df: pd.DataFrame, format: str = 'both'):
-        """Guarda los datos en los formatos especificados"""
-        if format in ('csv', 'both'):
-            df.to_csv(self.CSV_PATH, index=False, encoding='utf-8-sig')
-            print(f"\nDatos guardados en {self.CSV_PATH}")
-        
-        if format in ('excel', 'both'):
-            df.to_excel(self.EXCEL_PATH, index=False)
-            print(f"Datos guardados en {self.EXCEL_PATH}")
+    def save_historical_data(self, df: pd.DataFrame):
+        """Guarda datos con marca temporal para historial"""
+        if not df.empty:
+            fecha = datetime.now().strftime('%Y-%m-%d')
+            df.to_csv(os.path.join(self.HISTORICAL_DIR, f'quotes_{fecha}.csv'), index=False)
+            df.to_excel(os.path.join(self.HISTORICAL_DIR, f'quotes_{fecha}.xlsx'), index=False)
     
-    def load_data(self, format: str = 'csv') -> pd.DataFrame:
-        """Carga datos existentes desde archivo"""
-        try:
-            if format == 'csv' and os.path.exists(self.CSV_PATH):
-                return pd.read_csv(self.CSV_PATH)
-            elif format == 'excel' and os.path.exists(self.EXCEL_PATH):
-                return pd.read_excel(self.EXCEL_PATH)
-            return pd.DataFrame()  # Retorna DataFrame vacío si no hay archivos
-        except Exception as e:
-            print(f"Error cargando datos: {str(e)}")
-            return pd.DataFrame()
+    def save_current_data(self, df: pd.DataFrame):
+        """Guarda versión actual de los datos"""
+        if not df.empty:
+            df.to_csv(self.CSV_ACTUAL, index=False)
+            df.to_excel(self.EXCEL_ACTUAL, index=False)
     
-    def get_quotes(self, pages: int = 1, force_rescrape: bool = False) -> pd.DataFrame:
+    def get_quotes(self, pages: int = 1) -> pd.DataFrame:
         """
-        Obtiene citas, con cache local automático.
+        Obtiene citas, guarda en múltiples formatos y devuelve DataFrame
         """
-        if not force_rescrape:
-            df_existing = self.load_data()
-            if not df_existing.empty:
-                print("Datos existentes cargados desde archivo.")
-                return df_existing
-        
         df = self.scrape_quotes(pages)
         
         if not df.empty:
-            self.save_data(df)
+            self.save_historical_data(df)
+            self.save_current_data(df)
             print(f"\n✅ Scraping completado. {len(df)} citas obtenidas.")
+            print(f"📁 Datos guardados en:\n- {self.CSV_ACTUAL}\n- {self.HISTORICAL_DIR}/")
         else:
-            print("\n⚠️ No se obtuvieron datos. Verifica la conexión o la estructura de la página.")
+            print("\n⚠️ No se obtuvieron datos. Verifica la conexión.")
         
         return df
 
 def main():
-    """Función principal para ejecución desde CLI"""
-    print("=== Iniciando scraper ===")
+    """Función principal para ejecución CLI"""
+    print("=== Scraper de Citaciones ===")
     scraper = QuotesScraper()
     quotes_df = scraper.get_quotes(pages=2)
     
     if not quotes_df.empty:
-        print("\n📊 Vista previa de los datos:")
-        print(quotes_df.head(3))
-        print("\n💾 Datos guardados en:")
-        print(f"- CSV: {os.path.abspath(scraper.CSV_PATH)}")
-        print(f"- Excel: {os.path.abspath(scraper.EXCEL_PATH)}")
-    else:
-        print("\nNo se obtuvieron datos para mostrar.")
+        print("\n📊 Vista previa de datos:")
+        print(quotes_df[['quote', 'author', 'tags_count']].head(3))
+        print(f"\n⏰ Última extracción: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
 if __name__ == "__main__":
     main()

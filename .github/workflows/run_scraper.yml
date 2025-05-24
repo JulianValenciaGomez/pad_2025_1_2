@@ -1,9 +1,12 @@
-name: Run Scraper Daily
+name: Scraper Diario con Histórico
 
 on:
   schedule:
     - cron: '0 13 * * *'  # 8:00 AM hora de Colombia (UTC-5)
   workflow_dispatch:
+  push:
+    paths-ignore:
+      - 'src/edu_pad/data/**'  # Evita bucles con commits automáticos
 
 jobs:
   scrape:
@@ -11,36 +14,65 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Configurar Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
-      - name: Install dependencies
+      - name: Instalar dependencias
         run: |
-          pip install -e .
-          pip install pandas requests beautifulsoup4 openpyxl lxml
+          pip install pandas requests beautifulsoup4 openpyxl lxml sqlite3
 
-      - name: Create data directory
+      - name: Crear estructura de directorios
         run: |
-          mkdir -p src/edu_pad/data
-          echo "Estructura de directorios:"
-          tree src/edu_pad || ls -R src/edu_pad
+          mkdir -p src/edu_pad/data/histórico
+          ls -R src/edu_pad
 
-      - name: Run Scraper
-        working-directory: ./src/edu_pad  # 👈 Ejecuta desde aquí
+      - name: Ejecutar Scraper
+        working-directory: ./src/edu_pad
         run: |
-          python dataweb.py
-          echo "Contenido de data/:"
-          ls -lh data/
+          python -c "
+          from datetime import datetime
+          import pandas as pd
+          from dataweb import QuotesScraper
+          
+          scraper = QuotesScraper()
+          df = scraper.get_quotes(pages=2)
+          
+          if not df.empty:
+              fecha = datetime.now().strftime('%Y-%m-%d')
+              # Guardar versión del día
+              df.to_csv(f'data/histórico/quotes_{fecha}.csv', index=False)
+              df.to_excel(f'data/histórico/quotes_{fecha}.xlsx', index=False)
+              
+              # Guardar versión actual (sobrescribe)
+              df.to_csv('data/quotes_actual.csv', index=False)
+              df.to_excel('data/quotes_actual.xlsx', index=False)
+              
+              # SQLite (opcional)
+              import sqlite3
+              conn = sqlite3.connect('data/quotes.db')
+              df['fecha_extraccion'] = fecha
+              df.to_sql('quotes', conn, if_exists='append', index=False)
+              conn.close()
+          "
 
-      - name: Upload Artifacts
-        if: success() && always()
+      - name: Subir artefactos
         uses: actions/upload-artifact@v4
         with:
-          name: quotes-data
+          name: datos-scraping
           path: |
-            src/edu_pad/data/quotes_data.csv
-            src/edu_pad/data/quotes_data.xlsx
-          if-no-files-found: warn  # 👈 Solo muestra advertencia si no hay archivos
-          retention-days: 5
+            src/edu_pad/data/quotes_actual.*
+            src/edu_pad/data/histórico/quotes_*.*
+            src/edu_pad/data/quotes.db
+          retention-days: 7
+
+      - name: Commit y Push (Actualiza el repositorio)
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git add src/edu_pad/data/
+          git commit -m "📊 [Automated] Actualización datos scraping $(date '+%Y-%m-%d %H:%M')"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
